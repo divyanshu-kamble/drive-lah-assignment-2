@@ -232,10 +232,11 @@ A distributed database system is one that stores data across multiple nodes or l
 
 ### Characteristics of Distributed Database Systems
 
-- **Data Distribution:** Data is spread out across multiple nodes, even in different places, which helps keep the system running even if something goes wrong.
-- **Scalability:** These systems can grow by adding more nodes when needed to handle more data or users.
-- **Consistency Models:** They use different ways to make sure all the data stays consistent, balancing between always being right, always being available, and always being fast.
-- **Replication and Partitioning:** They copy and split up data across nodes to make sure everything keeps running smoothly, even if one node fails.
+- Data is spread out across multiple nodes, even in different places, which helps keep the system running even if something goes wrong.
+- These systems can grow by adding more nodes when needed to handle more data or users.
+- They use different ways to make sure all the data stays consistent, balancing between always being right, always being available, and always being fast.
+- They copy and split up data across nodes to make sure everything keeps running smoothly, even if one node fails.
+
 
 ## Data Distribution
 
@@ -257,19 +258,19 @@ Shared and exclusive locks are tools used in database systems to manage multiple
 
 #### Shared Locks ('read locks')
 
-- **Definition:** Allow many users to read the same data at the same time but prevent anyone from changing the data.
-- **Purpose:** Ensures that data can be read by multiple users simultaneously without causing problems.
-- **Behavior:** 
+- Allow many users to read the same data at the same time but prevent anyone from changing the data. It ensures that data can be read by multiple users simultaneously without causing problems.
+What it does
   - Many users can read the data at the same time.
   - No one can change the data until all readers are done.
 
+
 #### Exclusive Locks ('write locks')
 
-- **Definition:** Allow only one user to read and change the data, blocking others from accessing it.
-- **Purpose:** Makes sure that only one user can make changes to the data at a time, keeping it safe from conflicts.
-- **Behavior:** 
+- Allow only one user to read and change the data, blocking others from accessing it, makes sure that only one user can make changes to the data at a time, keeping it safe from conflicts.
+What it does
   - Only one user can access the data for changes.
   - No other user can read or change the data until the exclusive lock is released.
+
 
 ### Types of Concurrency Control
 
