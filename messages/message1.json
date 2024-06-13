@@ -1,0 +1,18 @@
+{
+    "orderId": "128",
+    "customer": {
+        "customerId": "67890",
+        "name": "John Doe",
+        "email": "johndoe@example.com",
+        "address": {
+            "street": "123 Elm Street",
+            "city": "Somewhere",
+            "state": "CA",
+            "zipcode": "90210",
+            "country": "USA"
+        }
+    },
+    "orderTotal": 65.00,
+    "orderDate": "2023-06-10T12:34:56Z",
+    "status": "confirmed"
+}
