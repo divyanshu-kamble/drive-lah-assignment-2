@@ -103,9 +103,9 @@ resource "aws_sqs_queue_policy" "order_cancelled_queue_policy" {
 }
 
 # IAM Role and Policy for Lambda
-module "lambda_iam_role" {
+module "confirmed_lambda_iam_role" {
   source = "./modules/identity-access-management/iam-roles/"
-  name   = var.lambda_iam_role_name
+  name   = var.confirmed_lambda_iam_role_name
   assume_role_policy = jsonencode({
     "Version": "2012-10-17",
     "Statement": [
@@ -120,9 +120,9 @@ module "lambda_iam_role" {
 })
 }
 
-module "lambda_iam_policy" {
+module "confirmed_lambda_iam_policy" {
   source = "./modules/identity-access-management/iam-policy/"
-  name   = var.lambda_iam_policy_name
+  name   = var.confirmed_lambda_iam_policy_name
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -147,7 +147,7 @@ module "lambda_iam_policy" {
           "logs:CreateLogGroup"
         ],
         Resource = [
-          "arn:aws:logs:us-east-1:${local.aws_account_id}:log-group:/aws/lambda/${module.handle_order_lambda.lambda_function_name}:*"
+          "arn:aws:logs:us-east-1:${local.aws_account_id}:log-group:/aws/lambda/${module.confirmed_order_lambda.lambda_function_name}:*"
         ]
       },
       {
@@ -159,31 +159,110 @@ module "lambda_iam_policy" {
         ],
         Effect   = "Allow",
         Resource = [
-          module.order_confirmed_queue.queue_arn,
+          module.order_confirmed_queue.queue_arn
+        ]
+      }
+    ]
+  })
+  depends_on = [module.order_confirmed_queue]
+}
+
+module "cancelled_lambda_iam_role" {
+  source = "./modules/identity-access-management/iam-roles/"
+  name   = var.cancelled_lambda_iam_role_name
+  assume_role_policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "lambda.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+})
+}
+
+module "cancelled_lambda_iam_policy" {
+  source = "./modules/identity-access-management/iam-policy/"
+  name   = var.cancelled_lambda_iam_policy_name
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject"
+        ],
+        Effect   = "Allow",
+        Resource = "arn:aws:s3:::order-*/*"
+      },
+      {
+        Effect   = "Allow",
+        Action   = "logs:CreateLogGroup",
+        Resource = "arn:aws:logs:us-east-1:${local.aws_account_id}:*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:CreateLogGroup"
+        ],
+        Resource = [
+          "arn:aws:logs:us-east-1:${local.aws_account_id}:log-group:/aws/lambda/${module.cancelled_order_lambda.lambda_function_name}:*"
+        ]
+      },
+      {
+        Action = [
+          "sqs:SendMessage",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ],
+        Effect   = "Allow",
+        Resource = [
           module.order_cancelled_queue.queue_arn
         ]
       }
     ]
   })
-  depends_on = [module.order_confirmed_queue, module.order_cancelled_queue]
+  depends_on = [module.order_cancelled_queue]
 }
 
 #Attach policies to the role
-module "lambda_iam_role_policy_attachment" {
+module "confirmed_lambda_iam_role_policy_attachment" {
   source     = "./modules/identity-access-management/iam-role-policy-attachment/"
-  role       = module.lambda_iam_role.iam-role-name
-  policy_arn = module.lambda_iam_policy.iam-policy-arn
+  role       = module.confirmed_lambda_iam_role.iam-role-name
+  policy_arn = module.confirmed_lambda_iam_policy.iam-policy-arn
+}
+
+module "cancelled_lambda_iam_role_policy_attachment" {
+  source     = "./modules/identity-access-management/iam-role-policy-attachment/"
+  role       = module.cancelled_lambda_iam_role.iam-role-name
+  policy_arn = module.cancelled_lambda_iam_policy.iam-policy-arn
 }
 
 #Lambda Function to Handle Both Confirmed and Cancelled Orders
-module "handle_order_lambda" {
+module "confirmed_order_lambda" {
   source        = "./modules/lambda/"
-  iam_role     = module.lambda_iam_role.iam-role-arn
-  function_name = var.handle_order_lambda_function_name
-  handler       = var.order_handler
+  iam_role     = module.confirmed_lambda_iam_role.iam-role-arn
+  function_name = var.confirmed_order_lambda_function_name
+  handler       = var.confirmed_handler
   runtime       = var.runtime
   architectures = var.architectures
-  filename      = "./lambda_function/handle_order/handle-new.zip"
+  filename      = "./lambda_function/confirmed_order/confirmed_lambda.zip"
+}
+
+module "cancelled_order_lambda" {
+  source        = "./modules/lambda/"
+  iam_role     = module.cancelled_lambda_iam_role.iam-role-arn
+  function_name = var.cancelled_order_lambda_function_name
+  handler       = var.cancelled_handler
+  runtime       = var.runtime
+  architectures = var.architectures
+  filename      = "./lambda_function/cancelled_order/cancelled_lambda.zip"
 }
 
 # EventBridge Event Bus
@@ -233,12 +312,12 @@ resource "aws_cloudwatch_event_target" "cancelled_order_target" {
 # Lambda Trigger for SQS
 resource "aws_lambda_event_source_mapping" "confirmed_order_lambda_trigger" {
   event_source_arn = module.order_confirmed_queue.queue_arn
-  function_name    = module.handle_order_lambda.lambda_function_arn
+  function_name    = module.confirmed_order_lambda.lambda_function_arn
 }
 
 resource "aws_lambda_event_source_mapping" "cancelled_order_lambda_trigger" {
   event_source_arn = module.order_cancelled_queue.queue_arn
-  function_name    = module.handle_order_lambda.lambda_function_arn
+  function_name    = module.cancelled_order_lambda.lambda_function_arn
 }
 
 

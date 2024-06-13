@@ -20,19 +20,34 @@ variable "order_cancelled_queue_name" {
 }
 
 # Variables for IAM Role
-variable "lambda_iam_role_name" {
+variable "confirmed_lambda_iam_role_name" {
+  description = "The name of the IAM role for the Lambda function"
+  type        = string
+}
+
+variable "cancelled_lambda_iam_role_name" {
   description = "The name of the IAM role for the Lambda function"
   type        = string
 }
 
 # Variables for IAM Policy
-variable "lambda_iam_policy_name" {
+variable "confirmed_lambda_iam_policy_name" {
+  description = "The name of the IAM policy for the Lambda function"
+  type        = string
+}
+
+variable "cancelled_lambda_iam_policy_name" {
   description = "The name of the IAM policy for the Lambda function"
   type        = string
 }
 
 #Lambda
-variable "order_handler" {
+variable "confirmed_handler" {
+  description = "The handler for the Lambda function"
+  type        = string
+}
+
+variable "cancelled_handler" {
   description = "The handler for the Lambda function"
   type        = string
 }
@@ -47,14 +62,13 @@ variable "architectures" {
   type        = list(string)
 }
 
-variable "lambda_execution_role_name" {
-  description = "The name of the IAM role for Lambda execution"
-  default     = "lambda_execution_role"
+
+variable "confirmed_order_lambda_function_name" {
+  description = "The name of the Lambda function to handle orders"
 }
 
-variable "handle_order_lambda_function_name" {
+variable "cancelled_order_lambda_function_name" {
   description = "The name of the Lambda function to handle orders"
-  default     = "HandleOrderLambda"
 }
 
 #SQS
